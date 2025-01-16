@@ -1,0 +1,69 @@
+version: 2.1
+orbs:
+  # Your orb will be automatically injected here during the pipeline.
+  # Reference your orb's jobs and commands below as they will exist when built.
+  orb-tools: circleci/orb-tools@12.2.0
+  # The orb definition is intentionally not included here. It will be injected into the pipeline.
+  <orb-name>: {}
+# Use this tag to ensure test jobs always run,
+# even though the downstream publish job will only run on release tags.
+filters: &filters
+  tags:
+    only: /.*/
+# Filter for release tags.
+release-filters: &release-filters
+  branches:
+    ignore: /.*/
+  tags:
+    only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+jobs:
+  # Create jobs to test the commands of your orbs.
+  # You may want to add additional validation steps to ensure the commands are working as expected.
+  command-test:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      # Run your orb's commands to validate them.
+      - <orb-name>/nix
+      # Formatting checks. They depend on nix itself, so we have to run formatting checks of
+      # our own orb while we test the orb itself.
+      - run:
+          name: Run formatting
+          command: treefmt --ci
+      # Test nix environment
+      - run:
+          name: Test nix environment
+          command: test/test-nix-environment.sh
+workflows:
+  test-deploy:
+    jobs:
+      # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
+      # Test your orb's commands in a custom job and test your orb's jobs directly as a part of this workflow.
+      - command-test:
+          name: first run
+          filters: *filters
+          context: artifactory
+      - command-test:
+          name: second run
+          requires:
+            - first run
+          filters: *filters
+          context: artifactory
+      # The orb must be re-packed for publishing, and saved to the workspace.
+      - orb-tools/pack:
+          filters: *release-filters
+          pre-steps:
+            - run:
+                name: Write orb version file
+                command: echo "${CIRCLE_SHA1}" | tee /home/circleci/orb-version
+      - orb-tools/publish:
+          orb_name: digital-asset/build
+          vcs_type: << pipeline.project.type >>
+          pub_type: production
+          # Ensure this job requires all test jobs and the pack job.
+          requires:
+            - orb-tools/pack
+            - second run
+          context: circleci-orb-publish
+          filters: *release-filters

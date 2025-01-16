@@ -1,0 +1,28 @@
+description: >
+  This command sets up the nix environment for the build
+
+steps:
+  - run:
+      environment:
+        ORB_VERSION: <<include(../../orb-version)>>
+      name: Nix preparation
+      command: <<include(scripts/prep.sh)>>
+  - restore_cache:
+      name: Nix restore cache
+      keys:
+        - nix-{{ checksum "/home/circleci/nix/cache-keys/orb-version" }}-{{ checksum "/home/circleci/nix/cache-keys/nix-checksums" }}
+        - nix-{{ checksum "/home/circleci/nix/cache-keys/orb-version" }}
+  - run:
+      name: Nix Setup
+      command: <<include(scripts/setup.sh)>>
+  - save_cache:
+      name: Nix save cache
+      key: nix-{{ checksum "/home/circleci/nix/cache-keys/orb-version" }}-{{ checksum "/home/circleci/nix/cache-keys/nix-checksums" }}
+      paths:
+        - /home/circleci/.config/nix
+        - /home/circleci/.local/state
+        - /home/circleci/.nix-bashrc
+        - /home/circleci/.nix-channels
+        - /home/circleci/.nix-defexpr
+        - /home/circleci/.nix-profile
+        - /nix

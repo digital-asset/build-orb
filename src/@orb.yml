@@ -1,0 +1,7 @@
+version: 2.1
+description: >
+  Sets up standard nix environment for the build in CircleCI Includes checksums, directory creation, setup, and caching
+
+display:
+  source_url: "https://github.com/digital-asset/build-orb"
+  #  registry_url: "https://circleci.com/orbs/registry/orb/dach_ny/nix"

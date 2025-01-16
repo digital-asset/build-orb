@@ -1,0 +1,20 @@
+description: >
+  Sets up the nix environment for the build Includes checksums, directory creation, setup, and caching
+
+# Provide a use-case based example for using this orb.
+# Everything in the `usage` section will be displayed in the orb registry.
+# Comments are not retained.
+usage:
+  version: 2.1
+  orbs:
+    nix: dach_ny/nix@1.7.0
+  jobs:
+    setup:
+      docker:
+        - image: cimg/base:current
+      steps:
+        - nix/nix
+  workflows:
+    check:
+      jobs:
+        - setup
