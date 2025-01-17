@@ -56,7 +56,7 @@ fi
 
 # always run as root
 if [ ${EUID} == 0 ]; then
-  main "${ORB_VERSION}" "${ARTIFACTORY_USER:-}" "${ARTIFACTORY_PASSWORD:-}"
+  main "${ORB_VERSION}" "${ARTIFACTORY_USER:-}" "${ARTIFACTORY_PASSWORD:-${ARTIFACTORY_TOKEN:-}}"
 else
-  sudo bash -c "$(declare -f main); main \"${ORB_VERSION}\" \"${ARTIFACTORY_USER:-}\" \"${ARTIFACTORY_PASSWORD:-}\""
+  sudo bash -c "$(declare -f main); main \"${ORB_VERSION}\" \"${ARTIFACTORY_USER:-}\" \"${ARTIFACTORY_PASSWORD:-${ARTIFACTORY_TOKEN:-}}\""
 fi
