@@ -35,6 +35,13 @@ jobs:
       - run:
           name: Test nix environment
           command: test/test-nix-environment.sh
+  copy-orb-definition:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: 'Create DACH-NY/build orb definition'
+          command: cp dist/orb.yml dist/dach-ny-orb.yml
 workflows:
   test-deploy:
     jobs:
@@ -52,11 +59,15 @@ workflows:
           context: artifactory
       # The orb must be re-packed for publishing, and saved to the workspace.
       - orb-tools/pack:
-          filters: *release-filters
+          filters: *filters
           pre-steps:
             - run:
                 name: Write orb version file
                 command: echo "${CIRCLE_SHA1}" | tee /home/circleci/orb-version
+      - copy-orb-definition:
+          filters: *filters
+          requires:
+            - orb-tools/pack
       - orb-tools/publish:
           orb_name: digital-asset/build
           vcs_type: << pipeline.project.type >>
@@ -64,6 +75,17 @@ workflows:
           # Ensure this job requires all test jobs and the pack job.
           requires:
             - orb-tools/pack
+            - second run
+          context: circleci-orb-publish
+          filters: *release-filters
+      - orb-tools/publish:
+          orb_name: dach_ny/build
+          orb_file_name: dist/dach-ny-orb.yml
+          vcs_type: << pipeline.project.type >>
+          pub_type: production
+          # Ensure this job requires all test jobs and the pack job.
+          requires:
+            - copy-orb-definition
             - second run
           context: circleci-orb-publish
           filters: *release-filters
